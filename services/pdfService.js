@@ -17,7 +17,6 @@ async function getBrowser() {
         "--single-process",
         "--disable-gpu",
       ],
-      // executablePath: process.env.CHROME_PATH || undefined,
     });
   }
   return browserPromise;
