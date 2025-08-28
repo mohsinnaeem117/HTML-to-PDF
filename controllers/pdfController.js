@@ -10,10 +10,10 @@ const generatePdf = async (req, res) => {
       return res.status(400).json({ error: "HTML content is required" });
     }
 
-    // ✅ Generate PDF buffer from service
+    // ✅ Generate PDF buffer
     const pdfBuffer = await pdfService.generatePdf(htmlContent, options);
 
-    // ✅ Agar base64 chahiye (Bubble.io or APIs ke liye useful)
+    // ✅ Agar base64 chahiye (Bubble.io / APIs ke liye)
     if (options.asBase64) {
       return res.json({
         filename: options.filename || "document.pdf",
@@ -21,14 +21,15 @@ const generatePdf = async (req, res) => {
       });
     }
 
-    // ✅ Warna direct PDF response bhejo
+    // ✅ Warna direct PDF bhejo
     res.setHeader("Content-Type", "application/pdf");
     res.setHeader(
       "Content-Disposition",
       `attachment; filename="${options.filename || "document.pdf"}"`
     );
+    res.setHeader("Content-Length", pdfBuffer.length);
 
-    return res.send(pdfBuffer);
+    return res.end(pdfBuffer); // <-- important (NOT res.send)
   } catch (error) {
     console.error("❌ PDF generation error:", error);
     return res.status(500).json({ error: "Failed to generate PDF" });
