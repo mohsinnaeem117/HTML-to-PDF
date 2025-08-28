@@ -1,3 +1,4 @@
+// services/pdfService.js
 const puppeteer = require("puppeteer");
 
 let browserPromise = null;
@@ -5,7 +6,7 @@ let browserPromise = null;
 async function getBrowser() {
   if (!browserPromise) {
     browserPromise = puppeteer.launch({
-      headless: "new", // ✅ latest Puppeteer style
+      headless: "new",
       args: [
         "--no-sandbox",
         "--disable-setuid-sandbox",
@@ -16,7 +17,7 @@ async function getBrowser() {
         "--single-process",
         "--disable-gpu",
       ],
-      // executablePath: process.env.CHROME_PATH || undefined, // Railway me zyada cases me auto mil jata hai
+      // executablePath: process.env.CHROME_PATH || undefined,
     });
   }
   return browserPromise;
@@ -32,8 +33,26 @@ async function generatePdf(htmlContent, options = {}) {
       height: options.height || 800,
     });
 
-    // ✅ timeout guard rakho
-    await page.setContent(htmlContent, {
+    // 🔑 Inject fix styles (SVG + background + page size)
+    const patchedHtml = `
+      <style>
+        body {
+          margin: 0;
+          background: ${options.bgColor || "white"} !important;
+        }
+        svg {
+          max-width: 100%;
+          height: auto;
+        }
+        @page {
+          size: ${options.pageSize || "A4"};
+          margin: ${options.margin || 15}mm;
+        }
+      </style>
+      ${htmlContent}
+    `;
+
+    await page.setContent(patchedHtml, {
       waitUntil: ["domcontentloaded", "networkidle0"],
       timeout: 30000,
     });
@@ -62,6 +81,7 @@ async function generatePdf(htmlContent, options = {}) {
 }
 
 // graceful shutdown
+
 process.on("SIGINT", async () => {
   if (browserPromise) {
     const b = await browserPromise;
