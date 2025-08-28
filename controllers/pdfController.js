@@ -13,7 +13,7 @@ const generatePdf = async (req, res) => {
     // ✅ Generate PDF buffer
     const pdfBuffer = await pdfService.generatePdf(htmlContent, options);
 
-    // ✅ Agar base64 chahiye (Bubble.io / APIs ke liye)
+   
     if (options.asBase64) {
       return res.json({
         filename: options.filename || "document.pdf",
@@ -21,7 +21,7 @@ const generatePdf = async (req, res) => {
       });
     }
 
-    // ✅ Warna direct PDF bhejo
+    
     res.setHeader("Content-Type", "application/pdf");
     res.setHeader(
       "Content-Disposition",
