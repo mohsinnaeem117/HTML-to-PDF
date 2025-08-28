@@ -5,7 +5,7 @@ let browserPromise = null;
 async function getBrowser() {
   if (!browserPromise) {
     browserPromise = puppeteer.launch({
-      headless: true,
+      headless: "new", // ✅ latest Puppeteer style
       args: [
         "--no-sandbox",
         "--disable-setuid-sandbox",
@@ -16,7 +16,7 @@ async function getBrowser() {
         "--single-process",
         "--disable-gpu",
       ],
-      // executablePath: process.env.CHROME_PATH || undefined, // not usually needed on Railway
+      // executablePath: process.env.CHROME_PATH || undefined, // Railway me zyada cases me auto mil jata hai
     });
   }
   return browserPromise;
@@ -25,11 +25,18 @@ async function getBrowser() {
 async function generatePdf(htmlContent, options = {}) {
   const browser = await getBrowser();
   const page = await (await browser).newPage();
-  try {
-    // optional viewport (helps with layout)
-    await page.setViewport({ width: options.width || 1200, height: options.height || 800 });
 
-    await page.setContent(htmlContent, { waitUntil: "networkidle0" });
+  try {
+    await page.setViewport({
+      width: options.width || 1200,
+      height: options.height || 800,
+    });
+
+    // ✅ timeout guard rakho
+    await page.setContent(htmlContent, {
+      waitUntil: ["domcontentloaded", "networkidle0"],
+      timeout: 30000,
+    });
 
     const pdfBuffer = await page.pdf({
       format: options.pageSize || "A4",
@@ -45,8 +52,11 @@ async function generatePdf(htmlContent, options = {}) {
 
     return pdfBuffer;
   } finally {
-    // always close the page
-    try { await page.close(); } catch (e) { /* ignore */ }
+    try {
+      await page.close();
+    } catch (e) {
+      console.warn("⚠️ Page close failed:", e.message);
+    }
   }
 }
 
@@ -54,7 +64,7 @@ async function generatePdf(htmlContent, options = {}) {
 process.on("SIGINT", async () => {
   if (browserPromise) {
     const b = await browserPromise;
-    await b.close().catch(()=>{});
+    await b.close().catch(() => {});
   }
   process.exit(0);
 });
