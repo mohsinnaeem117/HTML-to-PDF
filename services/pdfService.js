@@ -42,6 +42,7 @@ async function generatePdf(htmlContent, options = {}) {
       format: options.pageSize || "A4",
       landscape: options.orientation === "landscape",
       printBackground: true,
+      preferCSSPageSize: true,
       margin: {
         top: `${options.margin || 15}mm`,
         right: `${options.margin || 15}mm`,
